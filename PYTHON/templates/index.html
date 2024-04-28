@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajouter une entrée</title>
+</head>
+<body>
+    <h1>Ajouter une entrée dans l'inventaire</h1>
+    <form action="/add" method="post">
+        <label for="colonne1">Colonne 1:</label>
+        <input type="text" name="colonne1" required><br>
+        <label for="colonne2">Colonne 2:</label>
+        <input type="text" name="colonne2" required><br>
+        <label for="colonne3">Colonne 3:</label>
+        <input type="text" name="colonne3" required><br>
+        <label for="colonne4">Colonne 4:</label>
+        <input type="text" name="colonne4" required><br>
+        <label for="colonne5">Colonne 5:</label>
+        <input type="text" name="colonne5" required><br>
+        <label for="colonne6">Colonne 6:</label>
+        <input type="text" name="colonne6" required><br>
+        <label for="colonne7">Colonne 7:</label>
+        <input type="text" name="colonne7" required><br>
+	<label for="colonne8">Colonne 8:</label>
+        <input type="text" name="colonne8" required><br>
+        <button type="submit">Ajouter</button>
+    </form>
+    
+    <hr>
+
+    <h1>Recherche dans l'inventaire</h1>
+    <form action="/search" method="get">
+        <label for="query">Recherche:</label>
+        <input type="text" name="query">
+        <button type="submit">Rechercher</button>
+    </form>
+    
+    <hr>
+        
+
+    <h1>Afficher l'inventaire</h1>
+    <form action="/inventory" method="get">
+        <label for="entries">Afficher:</label>
+        <input type="text" name="entries">
+        <button type="submit">Afficher</button>
+    </form>
+</body>
+</html>
