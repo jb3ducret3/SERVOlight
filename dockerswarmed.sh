@@ -31,8 +31,8 @@ docker service scale servo_inventairedb=2
 docker service ls
 
 # Demande de configuration SSH vers le worker
-read -p "Avez-vous configuré la connexion SSH vers le worker ? (o/N) " answer
-if [[ "$answer" != "o" ]]; then
+read -p "Avez-vous configuré la connexion SSH vers le worker ? (O/N) " answer
+if [[ "$answer" != "O" ]]; then
     # Connexion au nœud esclave et ajout au cluster Docker Swarm
     # Remplacez <utilisateur> par l'utilisateur SSH du nœud esclave
     # et <mot_de_passe> par le mot de passe de l'utilisateur SSH
