@@ -37,8 +37,8 @@ recuperer_donnees() {
 # Fonction pour démarrer l'application
 demarrer_application() {
     echo "Démarrage de l'application..."
-    # Commande pour démarrer les conteneurs nécessaires
-    docker-compose up -d
+    # Commande pour démarrer les services Docker Swarm
+    docker stack deploy -c docker-compose.yml mystack
     echo "L'application a été démarrée avec succès."
     read -p "Appuyez sur Entrée pour continuer..."
 }
@@ -46,8 +46,8 @@ demarrer_application() {
 # Fonction pour arrêter l'application
 arreter_application() {
     echo "Arrêt de l'application..."
-    # Commande pour arrêter les conteneurs de l'application
-    docker-compose down
+    # Commande pour arrêter les services Docker Swarm
+    docker stack rm mystack
     echo "L'application a été arrêtée avec succès."
     read -p "Appuyez sur Entrée pour continuer..."
 }
@@ -55,8 +55,9 @@ arreter_application() {
 # Fonction pour redémarrer l'application
 redemarrer_application() {
     echo "Redémarrage de l'application..."
-    # Commande pour redémarrer les conteneurs de l'application
-    docker-compose restart
+    # Commande pour redémarrer les services Docker Swarm
+    docker stack rm mystack
+    docker stack deploy -c docker-compose.yml mystack
     echo "L'application a été redémarrée avec succès."
     read -p "Appuyez sur Entrée pour continuer..."
 }
