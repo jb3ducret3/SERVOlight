@@ -10,7 +10,9 @@ afficher_menu() {
     echo "4. Arrêter l'application"
     echo "5. Redémarrer l'application"
     echo "6. Supprimer tous les conteneurs"
-    echo "7. Quitter"
+    echo "7. Vérifier l'état du cluster"
+    echo "8. Ajouter un nœud worker"
+    echo "9. Quitter"
     echo "Entrez votre choix : "
 }
 
@@ -71,6 +73,23 @@ supprimer_tous_conteneurs() {
     read -p "Appuyez sur Entrée pour continuer..."
 }
 
+# Fonction pour vérifier l'état du cluster
+verifier_etat_cluster() {
+    echo "Vérification de l'état du cluster..."
+    docker node ls
+    read -p "Appuyez sur Entrée pour continuer..."
+}
+
+# Fonction pour ajouter un nœud worker
+ajouter_worker() {
+    echo "Ajout d'un nœud worker..."
+    read -p "Entrez l'adresse IP du manager : " MANAGER_IP
+    read -p "Entrez le jeton de jointure du worker : " JOIN_TOKEN
+    docker swarm join --token $JOIN_TOKEN $MANAGER_IP:2377
+    echo "Nœud worker ajouté avec succès."
+    read -p "Appuyez sur Entrée pour continuer..."
+}
+
 # Boucle principale du menu
 while true; do
     afficher_menu
@@ -82,7 +101,9 @@ while true; do
         4) arreter_application ;;
         5) redemarrer_application ;;
         6) supprimer_tous_conteneurs ;;
-        7) exit ;;
-        *) echo "Choix invalide. Veuillez saisir un nombre entre 1 et 7." ;;
+        7) verifier_etat_cluster ;;
+        8) ajouter_worker ;;
+        9) exit ;;
+        *) echo "Choix invalide. Veuillez saisir un nombre entre 1 et 9." ;;
     esac
 done
