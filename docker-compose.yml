@@ -1,8 +1,9 @@
-version: "3.8"
+version: "3.3"
 
 services:
   traefik:
     image: "traefik:v2.11"
+    container_name: "traefik"
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
@@ -13,40 +14,24 @@ services:
       - "8081:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
-    labels:
-      - "traefik.enable=true"
-    networks:
-      - webnet
+    restart: always
 
   inventairedb:
     image: inventairedb
+    container_name: inventairedb
     ports:
       - "8888:8888" # Associez le port 8888 du conteneur au port 8888 de l'hôte
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.inventairedb.rule=Host(`inventairedb.localhost`)"
       - "traefik.http.routers.inventairedb.entrypoints=web"
-    deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
-    networks:
-      - webnet
+#    deploy:
+#      replicas: 2
+    restart: always
 
   dnsserver:
     image: dnsserveur
+    container_name: dnsserveur
     ports:
       - "53:53/udp"
-    deploy:
-      replicas: 2
-      restart_policy:
-        condition: on-failure
-    networks:
-      - webnet
-
-networks:
-  webnet:
+    restart: always
