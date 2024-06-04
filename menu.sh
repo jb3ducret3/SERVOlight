@@ -1,25 +1,12 @@
 #!/bin/bash
 
-# Fonction pour afficher le menu principal
-afficher_menu() {
-    clear
-    echo "Menu Principal"
-    echo "1. Installer l'application"
-    echo "2. Récupérer les données"
-    echo "3. Démarrer l'application"
-    echo "4. Arrêter l'application"
-    echo "5. Redémarrer l'application"
-    echo "6. Supprimer tous les conteneurs"
-    echo "7. Vérifier l'état du cluster"
-    echo "8. Ajouter un nœud worker"
-    echo "9. Quitter"
-    echo "Entrez votre choix : "
-}
+# Configuration de votre token ngrok (remplacez "your_ngrok_authtoken" par votre token réel)
+NGROK_TOKEN="your_ngrok_authtoken"
+LOCAL_PORT=8888
 
 # Fonction pour installer l'application
 installer_application() {
     echo "Installation de l'application..."
-    # Commande pour exécuter le script d'installation
     chmod +x lancement.sh
     ./lancement.sh
     echo "L'application a été installée avec succès."
@@ -29,7 +16,6 @@ installer_application() {
 # Fonction pour récupérer les données
 recuperer_donnees() {
     echo "Récupération des données..."
-    # Commande pour exécuter le script de récupération de données
     chmod +x recuperationDATA.sh
     ./recuperationDATA.sh
     echo "Les données ont été récupérées avec succès."
@@ -39,7 +25,6 @@ recuperer_donnees() {
 # Fonction pour démarrer l'application
 demarrer_application() {
     echo "Démarrage de l'application..."
-    # Commande pour démarrer les services Docker Swarm
     docker stack deploy -c docker-compose.yml mystack
     echo "L'application a été démarrée avec succès."
     read -p "Appuyez sur Entrée pour continuer..."
@@ -48,7 +33,6 @@ demarrer_application() {
 # Fonction pour arrêter l'application
 arreter_application() {
     echo "Arrêt de l'application..."
-    # Commande pour arrêter les services Docker Swarm
     docker stack rm mystack
     echo "L'application a été arrêtée avec succès."
     read -p "Appuyez sur Entrée pour continuer..."
@@ -57,8 +41,7 @@ arreter_application() {
 # Fonction pour redémarrer l'application
 redemarrer_application() {
     echo "Redémarrage de l'application..."
-    # Commande pour redémarrer les services Docker Swarm
-    docker stack rm mystack
+    docker stack rm mystark
     docker stack deploy -c docker-compose.yml mystack
     echo "L'application a été redémarrée avec succès."
     read -p "Appuyez sur Entrée pour continuer..."
@@ -67,7 +50,6 @@ redemarrer_application() {
 # Fonction pour supprimer tous les conteneurs
 supprimer_tous_conteneurs() {
     echo "Suppression de tous les conteneurs..."
-    # Commande pour supprimer tous les conteneurs Docker
     docker container prune -f
     echo "Tous les conteneurs ont été supprimés avec succès."
     read -p "Appuyez sur Entrée pour continuer..."
@@ -90,11 +72,38 @@ ajouter_worker() {
     read -p "Appuyez sur Entrée pour continuer..."
 }
 
+# Fonction pour démarrer Ngrok
+demarrer_ngrok() {
+    echo "Démarrage de Ngrok..."
+    ngrok authtoken $NGROK_TOKEN
+    ngrok http $LOCAL_PORT > /dev/null &
+    sleep 10
+    NGROK_URL=$(curl --silent http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+    echo "Votre URL ngrok est: $NGROK_URL"
+}
+
+# Fonction pour afficher le menu principal
+afficher_menu() {
+    clear
+    echo "Menu Principal"
+    echo "1. Installer l'application"
+    echo "2. Récupérer les données"
+    echo "3. Démarrer l'application"
+    echo "4. Arrêter l'application"
+    echo "5. Redémarrer l'application"
+    echo "6. Supprimer tous les conteneurs"
+    echo "7. Vérifier l'état du cluster"
+    echo "8. Ajouter un nœud worker"
+    echo "9. Quitter"
+    echo "10. Démarrer Ngrok"
+    echo "Entrez votre choix : "
+}
+
 # Boucle principale du menu
 while true; do
     afficher_menu
     read choix
-    case $choix in
+    case $choi in
         1) installer_application ;;
         2) recuperer_donnees ;;
         3) demarrer_application ;;
@@ -104,6 +113,7 @@ while true; do
         7) verifier_etat_cluster ;;
         8) ajouter_worker ;;
         9) exit ;;
-        *) echo "Choix invalide. Veuillez saisir un nombre entre 1 et 9." ;;
+        10) demarrer_ngrok ;;
+        *) echo "Choix invalide. Veuillez saisir un nombre entre 1 et 10." ;;
     esac
 done
