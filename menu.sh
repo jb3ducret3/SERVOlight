@@ -1,8 +1,28 @@
 #!/bin/bash
 
-# Configuration de votre token ngrok (remplacez "your_ngrok_authtoken" par votre token réel)
-NGROK_TOKEN="your_ngrok_authtoken"
-LOCAL_PORT=8888
+# Configuration initiale de Ngrok et autres dépendances
+configurer_ngrok() {
+    NGROK_TOKEN="your_ngrok_authtoken"
+    LOCAL_PORT=8888
+
+    # Vérification et installation de jq si nécessaire
+    if ! command -v jq &> /dev/null; then
+        echo "jq n'est pas installé. Installation en cours..."
+        sudo apt-get update && sudo apt-get install -y jq
+    fi
+
+    # Installation de ngrok si ce n'est pas déjà fait
+    if ! command -v ngrok &> /dev/null; then
+        echo "ngrok n'est pas installé. Téléchargement et installation..."
+        wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+        unzip ngrok-stable-linux-amd64.zip
+        sudo mv ngrok /usr/local/bin/
+        rm ngrok-stable-linux-amd64.zip
+    fi
+
+    # Authentifier votre session ngrok (uniquement nécessaire si pas déjà configuré)
+    ngrok authtoken $NGROK_TOKEN
+}
 
 # Fonction pour installer l'application
 installer_application() {
@@ -41,7 +61,7 @@ arreter_application() {
 # Fonction pour redémarrer l'application
 redemarrer_application() {
     echo "Redémarrage de l'application..."
-    docker stack rm mystark
+    docker stack rm mystack
     docker stack deploy -c docker-compose.yml mystack
     echo "L'application a été redémarrée avec succès."
     read -p "Appuyez sur Entrée pour continuer..."
@@ -75,14 +95,16 @@ ajouter_worker() {
 # Fonction pour démarrer Ngrok
 demarrer_ngrok() {
     echo "Démarrage de Ngrok..."
-    ngrok authtoken $NGROK_TOKEN
     ngrok http $LOCAL_PORT > /dev/null &
     sleep 10
-    NGROK_URL=$(curl --silent http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+    NGROK_URL=$(curl --silent http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[] | select(.proto=="http") | .public_url')
     echo "Votre URL ngrok est: $NGROK_URL"
+    echo "Appuyez sur [CTRL+C] pour arrêter le tunnel..."
+    wait
 }
 
-# Fonction pour afficher le menu principal
+# Initialiser les composants et afficher le menu
+configurer_ngrok
 afficher_menu() {
     clear
     echo "Menu Principal"
@@ -94,16 +116,15 @@ afficher_menu() {
     echo "6. Supprimer tous les conteneurs"
     echo "7. Vérifier l'état du cluster"
     echo "8. Ajouter un nœud worker"
-    echo "9. Quitter"
-    echo "10. Démarrer Ngrok"
+    echo "9. Démarrer Ngrok"
+    echo "10. Quitter"
     echo "Entrez votre choix : "
 }
 
-# Boucle principale du menu
 while true; do
     afficher_menu
     read choix
-    case $choi in
+    case $choix in
         1) installer_application ;;
         2) recuperer_donnees ;;
         3) demarrer_application ;;
@@ -112,8 +133,8 @@ while true; do
         6) supprimer_tous_conteneurs ;;
         7) verifier_etat_cluster ;;
         8) ajouter_worker ;;
-        9) exit ;;
-        10) demarrer_ngrok ;;
+        9) demarrer_ngrok ;;
+        10) exit ;;
         *) echo "Choix invalide. Veuillez saisir un nombre entre 1 et 10." ;;
     esac
 done
