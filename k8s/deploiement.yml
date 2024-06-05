@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servolight-deployment
+  labels:
+    app: servolight
+#spec:
+ # replicas: 
+  selector:
+    matchLabels:
+      app: servolight
+  template:
+    metadata:
+      labels:
+        app: servolight
+    spec:
+      containers:
+      - name: servolight
+        image: ducretjb/servolight:latest
+        ports:
+        - containerPort: 8888
