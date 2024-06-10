@@ -1,0 +1,120 @@
+pipeline {
+    agent any
+    tools {
+        nodejs 'node16'  // Utilise Node.js version 16 pour les étapes de build
+    }
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'  // Définit la variable d'environnement SCANNER_HOME pour SonarQube
+    }
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()  // Nettoie le workspace pour supprimer les fichiers des builds précédents
+            }
+        }
+        stage('Checkout from Git') {
+            steps {
+                // Clone le dépôt principal de SERVOlight depuis GitHub
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/jb3ducret3/SERVOlight.git',
+                        credentialsId: 'github-token'
+                    ]]
+                ])
+            }
+        }
+        stage('Clone SERVOlight Repository') {
+            steps {
+                // Clone le dépôt secondaire de SERVOlight dans le répertoire de workspace
+                sh 'git clone https://github.com/jb3ducret3/SERVOlight.git /var/lib/jenkins/workspace/TEST/SERVOlight'
+            }
+        }
+        stage('Create Directory and package.json') {
+            steps {
+                // Crée le répertoire nécessaire et un fichier package.json pour le projet Node.js
+                sh '''
+                mkdir -p /var/lib/jenkins/workspace/TEST/SERVOlight
+                cat <<EOF > /var/lib/jenkins/workspace/TEST/SERVOlight/package.json
+                {
+                  "name": "servolight",
+                  "version": "1.0.0",
+                  "description": "A simple Node.js project for SERVOlight",
+                  "main": "index.js",
+                  "scripts": {
+                    "start": "node index.js",
+                    "test": "echo \\"Error: no test specified\\" && exit 1"
+                  },
+                  "dependencies": {
+                    "express": "^4.17.1"
+                  },
+                  "author": "Your Name",
+                  "license": "ISC"
+                }
+EOF
+                '''
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                // Lance une analyse SonarQube pour vérifier la qualité du code
+                withSonarQubeEnv('sonar-server') {
+                    sh '''
+                        $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=SERVOlight \
+                        -Dsonar.projectKey=SERVOlight
+                    '''
+                }
+            }
+        }
+        stage('Quality Gate') {
+            steps {
+                // Attend que l'analyse SonarQube soit terminée et vérifie le statut du Quality Gate
+                script {
+                    timeout(time: 10, unit: 'MINUTES') { 
+                        waitForQualityGate abortPipeline: true, credentialsId: 'Sonar-token'
+                    }
+                }
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                // Installe les dépendances npm définies dans le fichier package.json
+                dir('SERVOlight') {
+                    sh 'npm install'
+                }
+            }
+        }
+        stage('Trivy File System Scan') {
+            steps {
+                // Effectue une analyse de sécurité avec Trivy sur le système de fichiers
+                sh 'trivy fs ./SERVOlight > trivyfs.txt'
+            }
+        }
+        stage('Docker Build & Push') {
+            steps {
+                // Construit l'image Docker à partir du Dockerfile dans le répertoire PYTHON et la pousse vers Docker Hub
+                script {
+                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                        sh '''
+                            cd SERVOlight/PYTHON
+                            docker build -t inventairedb .
+                            docker tag inventairedb *****/inventairedb:latest
+                            docker push ******/inventairedb:latest
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Trivy Image Scan') {
+            steps {
+                // Effectue une analyse de sécurité avec Trivy sur l'image Docker construite
+                sh 'trivy image ******/inventairedb:latest > trivyimage.txt'
+            }
+        }
+        stage('Deploy to Container') {
+            steps {
+                // Supprime le conteneur Docker existant (s'il existe) et déploie un nouve
