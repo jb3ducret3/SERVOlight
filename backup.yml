@@ -1,0 +1,53 @@
+version: "3.3"
+
+networks:
+  traefik_network:
+    external: true
+  internal_network:
+    driver: bridge
+
+services:
+  traefik:
+    image: "traefik:v2.11"
+    container_name: "traefik"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8081:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - traefik_network
+    restart: always
+
+  inventairedb:
+    image: inventairedb
+    container_name: inventairedb
+    ports:
+      - "8888:8888"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.inventairedb.rule=Host(`inventairedb.localhost`)"
+      - "traefik.http.routers.inventairedb.entrypoints=web"
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    networks:
+      - internal_network
+      - traefik_network
+
+  dnsserver:
+    image: dnsserveur
+    container_name: dnsserveur
+    ports:
+      - "53:53/udp"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - internal_network
